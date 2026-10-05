@@ -1,0 +1,33 @@
+name: LinkedIn Auto Post
+
+on:
+  schedule:
+    # 04:00 UTC = 9:00 AM Pakistan time, Mon/Wed/Fri
+    - cron: "0 4 * * 1,3,5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Generate the post but do NOT publish it"
+        type: boolean
+        default: true
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate and publish post
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_PERSON_ID: ${{ secrets.LINKEDIN_PERSON_ID }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        run: python post.py
